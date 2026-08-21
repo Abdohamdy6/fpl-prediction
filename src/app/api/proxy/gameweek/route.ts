@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       gameweekId = 1;
     }
 
-    // Check if Gameweek exists and has matches
+    // Fast DB Lookup
     let gameweek = await db.gameweek.findUnique({
       where: { id: gameweekId },
       include: {
@@ -32,12 +32,11 @@ export async function GET(req: Request) {
       },
     });
 
-    // AUTO-SYNC: If Gameweek does not exist or has 0 matches, fetch automatically from Premier League
+    // Auto-sync if not present or has 0 matches
     if (!gameweek || gameweek.matches.length === 0) {
-      console.log(`[Proxy] Auto-syncing Gameweek ${gameweekId} on-demand...`);
+      console.log(`[Proxy] Auto-syncing Gameweek ${gameweekId}...`);
       await syncGameweek(gameweekId);
 
-      // Re-fetch populated gameweek
       gameweek = await db.gameweek.findUnique({
         where: { id: gameweekId },
         include: {
@@ -59,14 +58,12 @@ export async function GET(req: Request) {
 
     const now = new Date();
 
-    // Map matches with user predictions and REAL dynamic consensus only
     const matches = gameweek.matches.map((m) => {
       const isLocked = now >= new Date(m.kickoffTime);
       const userPred = userId
         ? m.predictions.find((p) => p.userId === userId)
         : null;
 
-      // Calculate real community consensus only if predictions exist
       const totalPreds = m.predictions.length;
       let consensus = null;
 
@@ -118,16 +115,25 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({
-      gameweek: {
-        id: gameweek.id,
-        name: gameweek.name,
-        deadline: gameweek.deadline,
-        isCurrent: gameweek.isCurrent,
-        isCompleted: gameweek.isCompleted,
+    return NextResponse.json(
+      {
+        gameweek: {
+          id: gameweek.id,
+          name: gameweek.name,
+          deadline: gameweek.deadline,
+          isCurrent: gameweek.isCurrent,
+          isCompleted: gameweek.isCompleted,
+        },
+        matches,
       },
-      matches,
-    });
+      {
+        headers: {
+          "Cache-Control": userId
+            ? "private, no-cache, no-store, max-age=0, must-revalidate"
+            : "public, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("Gameweek proxy error:", error);
     return NextResponse.json({ error: "Failed to fetch gameweek data" }, { status: 500 });

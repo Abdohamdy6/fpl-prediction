@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Calendar, Save, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Lock, UserPlus, LogIn } from "lucide-react";
@@ -23,7 +23,19 @@ export default function PredictPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  const loadGameweekData = async (gw: number) => {
+  // In-memory client cache for instant GW switching (0ms lag)
+  const gwCache = useRef<Record<number, { gameweek: any; matches: MatchData[] }>>({});
+
+  const loadGameweekData = async (gw: number, forceRefresh = false) => {
+    // Check if in cache for instant UI rendering
+    if (!forceRefresh && gwCache.current[gw]) {
+      const cached = gwCache.current[gw];
+      setGameweekInfo(cached.gameweek);
+      setMatches(cached.matches);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setSaveSuccess(false);
     setSaveError("");
@@ -39,7 +51,13 @@ export default function PredictPage() {
       if (data.matches) {
         setMatches(data.matches);
 
-        // Pre-populate prediction state from user predictions or default to 0-0
+        // Save to cache
+        gwCache.current[gw] = {
+          gameweek: data.gameweek,
+          matches: data.matches,
+        };
+
+        // Pre-populate prediction state
         const initialPreds: Record<string, { home: number; away: number }> = {};
         for (const m of data.matches) {
           if (m.userPrediction) {
@@ -48,10 +66,10 @@ export default function PredictPage() {
               away: m.userPrediction.predictedAwayScore,
             };
           } else {
-            initialPreds[m.id] = { home: 0, away: 0 };
+            initialPreds[m.id] = predictions[m.id] || { home: 0, away: 0 };
           }
         }
-        setPredictions(initialPreds);
+        setPredictions((prev) => ({ ...prev, ...initialPreds }));
       }
     } catch (err) {
       console.error("Failed to load matches:", err);
@@ -68,7 +86,7 @@ export default function PredictPage() {
     setPredictions((prev) => ({
       ...prev,
       [matchId]: {
-        ...prev[matchId],
+        ...(prev[matchId] || { home: 0, away: 0 }),
         [side]: val,
       },
     }));
@@ -107,7 +125,7 @@ export default function PredictPage() {
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
-      loadGameweekData(currentGw); // Refresh latest match states
+      loadGameweekData(currentGw, true); // Force refresh
     } catch (err: any) {
       setSaveError(err.message);
     } finally {
@@ -133,7 +151,7 @@ export default function PredictPage() {
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/register"
-              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-pl-green px-6 py-3 text-sm font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-all glow-green active:scale-95"
+              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-pl-green px-6 py-3 text-sm font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-all glow-green active:scale-95 shadow-md"
             >
               <UserPlus className="h-4 w-4" />
               Create Free Account
@@ -189,7 +207,7 @@ export default function PredictPage() {
                 key={gw}
                 onClick={() => setCurrentGw(gw)}
                 className={cn(
-                  "rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold transition-all shrink-0",
+                  "rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer",
                   gw === currentGw
                     ? "bg-pl-green text-pl-purple-deepest glow-green shadow-md"
                     : "border border-pl-purple-light bg-pl-purple-deeper text-slate-300 hover:bg-pl-purple-light"
@@ -229,7 +247,7 @@ export default function PredictPage() {
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="pl-card h-44 rounded-2xl animate-pulse bg-pl-purple-deeper/50" />
+            <div key={i} className="pl-card h-52 rounded-2xl animate-pulse bg-pl-purple-deeper/50" />
           ))}
         </div>
       ) : matches.length === 0 ? (
@@ -260,7 +278,7 @@ export default function PredictPage() {
         </div>
       )}
 
-      {/* Floating Action Bar (Positioned above mobile tab bar) */}
+      {/* Floating Action Bar */}
       <div className="fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-3 sm:px-4">
         <div className="flex items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-pl-purple-light/70 bg-pl-purple-deepest/95 p-2.5 sm:p-3 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-xl">
           <div className="flex items-center gap-2 pl-1.5">
@@ -273,7 +291,7 @@ export default function PredictPage() {
           <button
             onClick={handleSaveAll}
             disabled={saving}
-            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-pl-green px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-all glow-green active:scale-95 disabled:opacity-50 shadow-lg"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-pl-green px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-all glow-green active:scale-95 disabled:opacity-50 shadow-lg cursor-pointer"
           >
             {saving ? (
               <span>Saving...</span>
