@@ -1,0 +1,136 @@
+// Prisma Schema for Premier League Predictor
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  passwordHash        String?
+  username            String         @unique
+  avatarUrl           String?
+  favoriteClubId      String?
+  role                String         @default("USER") // USER, ADMIN
+  totalPoints         Int            @default(0)
+  exactScoreCount     Int            @default(0)
+  correctOutcomeCount Int            @default(0)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  favoriteClub        Club?          @relation("FavoriteClub", fields: [favoriteClubId], references: [id])
+  predictions         Prediction[]
+  createdLeagues      League[]       @relation("LeagueCreator")
+  leagueMemberships   LeagueMember[]
+
+  @@index([totalPoints])
+}
+
+model Club {
+  id             String    @id // e.g. "ARS", "1", or internal ID
+  name           String
+  shortName      String
+  abbr           String
+  crestUrl       String
+  primaryColor   String    @default("#38003C")
+  secondaryColor String    @default("#00FF85")
+  stadiumName    String?
+  isActive       Boolean   @default(true)
+  updatedAt      DateTime  @updatedAt
+
+  homeMatches    Match[]   @relation("HomeTeam")
+  awayMatches    Match[]   @relation("AwayTeam")
+  fans           User[]    @relation("FavoriteClub")
+}
+
+model Gameweek {
+  id          Int          @id // Gameweek 1 to 38
+  name        String       // "Gameweek 1"
+  deadline    DateTime
+  isCurrent   Boolean      @default(false)
+  isCompleted Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  matches     Match[]
+  predictions Prediction[]
+}
+
+model Match {
+  id              String       @id @default(cuid())
+  sportDataId     String       @unique // Opta / PulseLive Match ID (e.g. "2645195")
+  gameweekId      Int
+  homeTeamId      String
+  awayTeamId      String
+  kickoffTime     DateTime
+  lockTime        DateTime
+  homeScore       Int?
+  awayScore       Int?
+  status          String       @default("SCHEDULED") // SCHEDULED, IN_PLAY, FINISHED, POSTPONED
+  minuteElapsed   Int?
+  broadcastInfo   String?
+  isPointsSettled Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  gameweek        Gameweek     @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+  homeTeam        Club         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam        Club         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  predictions     Prediction[]
+
+  @@index([gameweekId])
+  @@index([kickoffTime])
+}
+
+model Prediction {
+  id                 String   @id @default(cuid())
+  userId             String
+  matchId            String
+  gameweekId         Int
+  predictedHomeScore Int
+  predictedAwayScore Int
+  predictedOutcome   String   // HOME_WIN, DRAW, AWAY_WIN
+  pointsAwarded      Int      @default(0)
+  isExactHit         Boolean  @default(false)
+  isOutcomeHit       Boolean  @default(false)
+  isLocked           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match              Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  gameweek           Gameweek @relation(fields: [gameweekId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchId])
+  @@index([userId, gameweekId])
+  @@index([matchId])
+}
+
+model League {
+  id         String         @id @default(cuid())
+  name       String
+  code       String         @unique // 6-digit Invite Code (e.g. "PL-8X49")
+  creatorId  String
+  leagueType String         @default("PRIVATE") // GLOBAL, PRIVATE
+  avatarUrl  String?
+  createdAt  DateTime       @default(now())
+
+  creator    User           @relation("LeagueCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  members    LeagueMember[]
+}
+
+model LeagueMember {
+  id       String   @id @default(cuid())
+  leagueId String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  league   League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueId, userId])
+  @@index([userId])
+}
