@@ -2,15 +2,19 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { OFFICIAL_CLUB_MAP } from "@/lib/api/pl-client";
+import { ACTIVE_PL_CLUB_IDS } from "@/lib/api/pl-client";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
 
-    // Fetch all 20 clubs
+    // Fetch strictly the 20 active Premier League clubs
     const clubs = await db.club.findMany({
+      where: {
+        id: { in: ACTIVE_PL_CLUB_IDS },
+        isActive: true,
+      },
       orderBy: { name: "asc" },
     });
 
@@ -31,25 +35,40 @@ export async function GET() {
       });
       if (pred) {
         try {
-          userPrediction = {
-            id: pred.id,
-            rankings: JSON.parse(pred.rankings) as string[],
-            pointsEarned: pred.pointsEarned,
-            isSettled: pred.isSettled,
-            updatedAt: pred.updatedAt,
-          };
+          const parsed = JSON.parse(pred.rankings) as string[];
+          // Filter to ensure only active 20 PL clubs are present in the rankings
+          const validRankings = parsed.filter((id) => ACTIVE_PL_CLUB_IDS.includes(id));
+
+          if (validRankings.length === 20) {
+            userPrediction = {
+              id: pred.id,
+              rankings: validRankings,
+              pointsEarned: pred.pointsEarned,
+              isSettled: pred.isSettled,
+              updatedAt: pred.updatedAt,
+            };
+          }
         } catch {
           userPrediction = null;
         }
       }
     }
 
-    return NextResponse.json({
-      clubs,
-      seasonKickoffTime,
-      isLocked,
-      userPrediction,
-    });
+    return NextResponse.json(
+      {
+        clubs,
+        seasonKickoffTime,
+        isLocked,
+        userPrediction,
+      },
+      {
+        headers: {
+          "Cache-Control": userId
+            ? "private, no-cache, no-store, max-age=0, must-revalidate"
+            : "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("Table prediction GET error:", error);
     return NextResponse.json({ error: "Failed to fetch table prediction data" }, { status: 500 });
@@ -89,13 +108,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ensure all 20 IDs are unique
+    // Validate that all 20 IDs belong to the active Premier League clubs
     const uniqueClubs = new Set(rankings);
     if (uniqueClubs.size !== 20) {
       return NextResponse.json(
         { error: "Duplicate clubs found. Exactly 20 unique clubs required." },
         { status: 400 }
       );
+    }
+
+    for (const clubId of rankings) {
+      if (!ACTIVE_PL_CLUB_IDS.includes(clubId)) {
+        return NextResponse.json(
+          { error: `Invalid club ID: ${clubId}. Only active Premier League clubs are permitted.` },
+          { status: 400 }
+        );
+      }
     }
 
     const prediction = await db.seasonTablePrediction.upsert({

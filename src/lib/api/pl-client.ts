@@ -26,6 +26,30 @@ export interface ClubMetadataItem {
   };
 }
 
+// Exactly the 20 official active Premier League clubs for the 2026/27 season
+export const ACTIVE_PL_CLUB_IDS = [
+  "3",   // Arsenal
+  "7",   // Aston Villa
+  "91",  // AFC Bournemouth
+  "94",  // Brentford
+  "36",  // Brighton & Hove Albion
+  "8",   // Chelsea
+  "9",   // Coventry City
+  "31",  // Crystal Palace
+  "11",  // Everton
+  "54",  // Fulham
+  "88",  // Hull City
+  "40",  // Ipswich Town
+  "2",   // Leeds United
+  "14",  // Liverpool
+  "43",  // Manchester City
+  "1",   // Manchester United
+  "4",   // Newcastle United
+  "17",  // Nottingham Forest
+  "6",   // Tottenham Hotspur
+  "56",  // Sunderland
+];
+
 export const OFFICIAL_CLUB_MAP: Record<
   string,
   { shortName: string; abbr: string; primaryColor: string; secondaryColor: string }
@@ -50,8 +74,6 @@ export const OFFICIAL_CLUB_MAP: Record<
   "17": { shortName: "Nott'm Forest", abbr: "NFO", primaryColor: "#DD0000", secondaryColor: "#FFFFFF" },
   "6": { shortName: "Spurs", abbr: "TOT", primaryColor: "#132257", secondaryColor: "#FFFFFF" },
   "56": { shortName: "Sunderland", abbr: "SUN", primaryColor: "#EB172B", secondaryColor: "#000000" },
-  "21": { shortName: "West Ham", abbr: "WHU", primaryColor: "#7A263A", secondaryColor: "#1BB1E7" },
-  "39": { shortName: "Wolves", abbr: "WOL", primaryColor: "#FDB913", secondaryColor: "#231F20" },
 };
 
 // Map FPL team index (1-20) to Premier League official Club ID (Code)
@@ -176,24 +198,19 @@ export async function fetchBroadcastDetails(sportDataIds: string[]): Promise<Rec
 }
 
 /**
- * Sync All 20 Clubs into Database
+ * Sync Only the 20 Active Premier League Clubs into Database
  */
 export async function syncClubs(): Promise<number> {
   const clubs = await fetchClubsMetadata();
-  const clubsToProcess = clubs.length > 0 ? clubs : Object.entries(OFFICIAL_CLUB_MAP).map(([id, meta]) => ({
-    id,
-    name: meta.shortName,
-    shortName: meta.shortName,
-    abbr: meta.abbr,
-  }));
+  const clubsMap = new Map(clubs.map((c) => [String(c.id), c]));
 
   let count = 0;
-  for (const club of clubsToProcess) {
-    const id = String(club.id);
+  for (const id of ACTIVE_PL_CLUB_IDS) {
+    const club = clubsMap.get(id);
     const meta = OFFICIAL_CLUB_MAP[id];
-    const name = club.name || meta?.shortName || `Club ${id}`;
-    const shortName = meta?.shortName || club.shortName || name;
-    const abbr = meta?.abbr || club.abbr || shortName.slice(0, 3).toUpperCase();
+    const name = club?.name || meta?.shortName || `Club ${id}`;
+    const shortName = meta?.shortName || club?.shortName || name;
+    const abbr = meta?.abbr || club?.abbr || shortName.slice(0, 3).toUpperCase();
     const badgeUrl = `https://resources.premierleague.com/premierleague25/badges-alt/${id}.svg`;
 
     await db.club.upsert({
@@ -203,9 +220,10 @@ export async function syncClubs(): Promise<number> {
         shortName,
         abbr,
         crestUrl: badgeUrl,
-        primaryColor: meta?.primaryColor || club.clubColors?.primary || "#38003C",
-        secondaryColor: meta?.secondaryColor || club.clubColors?.secondary || "#00FF85",
-        stadiumName: club.ground?.name || "Premier League Stadium",
+        primaryColor: meta?.primaryColor || club?.clubColors?.primary || "#38003C",
+        secondaryColor: meta?.secondaryColor || club?.clubColors?.secondary || "#00FF85",
+        stadiumName: club?.ground?.name || "Premier League Stadium",
+        isActive: true,
         updatedAt: new Date(),
       },
       create: {
@@ -214,13 +232,25 @@ export async function syncClubs(): Promise<number> {
         shortName,
         abbr,
         crestUrl: badgeUrl,
-        primaryColor: meta?.primaryColor || club.clubColors?.primary || "#38003C",
-        secondaryColor: meta?.secondaryColor || club.clubColors?.secondary || "#00FF85",
-        stadiumName: club.ground?.name || "Premier League Stadium",
+        primaryColor: meta?.primaryColor || club?.clubColors?.primary || "#38003C",
+        secondaryColor: meta?.secondaryColor || club?.clubColors?.secondary || "#00FF85",
+        stadiumName: club?.ground?.name || "Premier League Stadium",
+        isActive: true,
       },
     });
     count++;
   }
+
+  // Deactivate all non-PL clubs
+  await db.club.updateMany({
+    where: {
+      id: { notIn: ACTIVE_PL_CLUB_IDS },
+    },
+    data: {
+      isActive: false,
+    },
+  });
+
   return count;
 }
 
@@ -341,7 +371,6 @@ export async function syncGameweek(gameweekNumber: number): Promise<{
   // 6. Upsert All Matches in DB
   let synced = 0;
   for (const match of parsedMatches) {
-    // Ensure home and away clubs exist
     await db.match.upsert({
       where: { sportDataId: match.sportDataId },
       update: {
