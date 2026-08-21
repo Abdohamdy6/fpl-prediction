@@ -23,11 +23,9 @@ export default function PredictPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  // In-memory client cache for instant GW switching (0ms lag)
   const gwCache = useRef<Record<number, { gameweek: any; matches: MatchData[] }>>({});
 
   const loadGameweekData = async (gw: number, forceRefresh = false) => {
-    // Check if in cache for instant UI rendering
     if (!forceRefresh && gwCache.current[gw]) {
       const cached = gwCache.current[gw];
       setGameweekInfo(cached.gameweek);
@@ -51,13 +49,11 @@ export default function PredictPage() {
       if (data.matches) {
         setMatches(data.matches);
 
-        // Save to cache
         gwCache.current[gw] = {
           gameweek: data.gameweek,
           matches: data.matches,
         };
 
-        // Pre-populate prediction state
         const initialPreds: Record<string, { home: number; away: number }> = {};
         for (const m of data.matches) {
           if (m.userPrediction) {
@@ -125,7 +121,7 @@ export default function PredictPage() {
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
-      loadGameweekData(currentGw, true); // Force refresh
+      loadGameweekData(currentGw, true);
     } catch (err: any) {
       setSaveError(err.message);
     } finally {
@@ -133,15 +129,14 @@ export default function PredictPage() {
     }
   };
 
-  // If user is not logged in, show Auth Gate
   if (status === "unauthenticated") {
     return (
       <div className="flex min-h-[70vh] items-center justify-center py-10 px-2">
-        <div className="pl-card max-w-lg w-full rounded-3xl p-6 sm:p-10 text-center shadow-2xl">
-          <div className="mx-auto mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-pl-purple-light/50 border border-pl-green/40 text-pl-green glow-green">
+        <div className="pl-card max-w-lg w-full rounded-2xl p-6 sm:p-10 text-center shadow-2xl border border-slate-800">
+          <div className="mx-auto mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-[#00FF85]/10 text-[#00FF85] border border-[#00FF85]/30">
             <Lock className="h-7 w-7 sm:h-8 sm:w-8" />
           </div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white">
+          <h2 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">
             ACCOUNT REQUIRED TO PREDICT
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-slate-300">
@@ -151,14 +146,14 @@ export default function PredictPage() {
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/register"
-              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-pl-green px-6 py-3 text-sm font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-all glow-green active:scale-95 shadow-md"
+              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#00FF85] px-6 py-3 text-sm font-black text-[#080B11] hover:bg-[#00e676] transition-all shadow-md active:scale-95 cursor-pointer"
             >
               <UserPlus className="h-4 w-4" />
               Create Free Account
             </Link>
             <Link
               href="/login"
-              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-pl-purple-light bg-pl-purple-deeper px-6 py-3 text-sm font-semibold text-white hover:bg-pl-purple-light transition-all"
+              className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-slate-700 bg-[#121824] px-6 py-3 text-sm font-bold text-white hover:bg-slate-800 transition-all cursor-pointer"
             >
               <LogIn className="h-4 w-4" />
               Sign In
@@ -171,46 +166,46 @@ export default function PredictPage() {
 
   return (
     <div className="flex flex-col gap-5 pb-36 sm:pb-28">
-      {/* Gameweek Selector Header */}
-      <div className="pl-card flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl">
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+      {/* Gameweek Selector & Overview Header */}
+      <div className="pl-card flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-800">
+        <div className="flex items-center gap-3.5 w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-pl-green text-pl-purple-deepest font-display text-xl sm:text-2xl font-black glow-green shadow-md">
+            <div className="flex h-11 w-11 sm:h-13 sm:w-13 items-center justify-center rounded-xl bg-[#00FF85] text-[#080B11] font-display text-2xl sm:text-3xl font-black shadow-md shrink-0">
               GW
             </div>
             <div>
-              <h1 className="font-display text-xl sm:text-3xl font-extrabold uppercase tracking-wider text-white">
+              <h1 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">
                 {gameweekInfo?.name || `Gameweek ${currentGw}`}
               </h1>
-              <p className="text-[10px] sm:text-xs font-semibold text-slate-300">
-                10 Matchweek Fixtures
+              <p className="text-xs font-bold text-slate-400">
+                10 Official Premier League Fixtures
               </p>
             </div>
           </div>
         </div>
 
         {/* Gameweek Carousel Buttons */}
-        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-full py-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto max-w-full py-1 bg-[#0b0f17] p-1.5 rounded-xl border border-slate-800">
           <button
             onClick={() => setCurrentGw((prev) => Math.max(1, prev - 1))}
             disabled={currentGw <= 1}
             aria-label="Previous Gameweek"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-pl-purple-light bg-pl-purple-deepest text-slate-300 hover:text-white disabled:opacity-30 shrink-0"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-[#121824] text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30 shrink-0 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          {[currentGw - 1, currentGw, currentGw + 1]
+          {[currentGw - 2, currentGw - 1, currentGw, currentGw + 1, currentGw + 2]
             .filter((gw) => gw >= 1 && gw <= 38)
             .map((gw) => (
               <button
                 key={gw}
                 onClick={() => setCurrentGw(gw)}
                 className={cn(
-                  "rounded-lg px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer",
+                  "rounded-lg px-3 py-1 text-xs font-display font-bold tracking-wide transition-all shrink-0 cursor-pointer",
                   gw === currentGw
-                    ? "bg-pl-green text-pl-purple-deepest glow-green shadow-md"
-                    : "border border-pl-purple-light bg-pl-purple-deeper text-slate-300 hover:bg-pl-purple-light"
+                    ? "bg-[#00FF85] text-[#080B11] shadow-md font-extrabold scale-105"
+                    : "bg-[#121824] border border-slate-700/80 text-slate-300 hover:bg-slate-700 hover:text-white"
                 )}
               >
                 GW {gw}
@@ -221,7 +216,7 @@ export default function PredictPage() {
             onClick={() => setCurrentGw((prev) => Math.min(38, prev + 1))}
             disabled={currentGw >= 38}
             aria-label="Next Gameweek"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-pl-purple-light bg-pl-purple-deepest text-slate-300 hover:text-white disabled:opacity-30 shrink-0"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-[#121824] text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30 shrink-0 cursor-pointer"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -230,15 +225,15 @@ export default function PredictPage() {
 
       {/* Notifications / Feedback */}
       {saveSuccess && (
-        <div className="flex items-center gap-2 rounded-2xl bg-pl-green/20 border border-pl-green/50 p-3 sm:p-4 text-xs sm:text-sm font-bold text-pl-green shadow-lg animate-fade-in">
-          <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-          <span>Predictions saved! Good luck for Gameweek {currentGw}!</span>
+        <div className="flex items-center gap-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 p-3.5 sm:p-4 text-xs sm:text-sm font-bold text-emerald-400 shadow-md animate-fade-in">
+          <CheckCircle2 className="h-5 w-5 shrink-0" />
+          <span>Your Gameweek {currentGw} predictions are saved and locked for kickoff!</span>
         </div>
       )}
 
       {saveError && (
-        <div className="flex items-center gap-2 rounded-2xl bg-red-500/20 border border-red-500/50 p-3 sm:p-4 text-xs sm:text-sm font-bold text-red-400 shadow-lg">
-          <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+        <div className="flex items-center gap-2.5 rounded-xl bg-rose-500/20 border border-rose-500/40 p-3.5 sm:p-4 text-xs sm:text-sm font-bold text-rose-400 shadow-md">
+          <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{saveError}</span>
         </div>
       )}
@@ -247,17 +242,17 @@ export default function PredictPage() {
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="pl-card h-52 rounded-2xl animate-pulse bg-pl-purple-deeper/50" />
+            <div key={i} className="h-60 rounded-2xl animate-pulse bg-[#121824] border border-slate-800" />
           ))}
         </div>
       ) : matches.length === 0 ? (
-        <div className="pl-card rounded-3xl p-8 sm:p-12 text-center">
-          <Calendar className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-slate-400 mb-3" />
-          <h3 className="font-display text-lg sm:text-xl font-bold uppercase text-white">
+        <div className="pl-card rounded-2xl p-8 sm:p-12 text-center border border-slate-800">
+          <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-3" />
+          <h3 className="font-display text-xl font-bold uppercase text-white">
             No Fixtures Found For Gameweek {currentGw}
           </h3>
-          <p className="text-xs text-slate-300 mt-1">
-            Fixtures will automatically sync via the Premier League proxy.
+          <p className="text-xs text-slate-400 mt-1">
+            Fixtures will automatically sync via the official Premier League proxy.
           </p>
         </div>
       ) : (
@@ -278,12 +273,12 @@ export default function PredictPage() {
         </div>
       )}
 
-      {/* Floating Action Bar */}
-      <div className="fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-3 sm:px-4">
-        <div className="flex items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-pl-purple-light/70 bg-pl-purple-deepest/95 p-2.5 sm:p-3 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-xl">
-          <div className="flex items-center gap-2 pl-1.5">
-            <span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-pl-green animate-ping" />
-            <span className="text-[11px] sm:text-xs font-semibold text-slate-200">
+      {/* Floating Action Dock */}
+      <div className="fixed bottom-16 md:bottom-5 left-1/2 -translate-x-1/2 z-40 w-full max-w-md px-3 sm:px-4">
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#0e1420]/95 border border-slate-800 text-white p-2.5 sm:p-3 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-2 pl-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#00FF85] animate-ping" />
+            <span className="text-xs font-bold text-white">
               GW {currentGw} Ready
             </span>
           </div>
@@ -291,13 +286,13 @@ export default function PredictPage() {
           <button
             onClick={handleSaveAll}
             disabled={saving}
-            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-pl-green px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-all glow-green active:scale-95 disabled:opacity-50 shadow-lg cursor-pointer"
+            className="flex items-center gap-2 rounded-xl bg-[#00FF85] px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-black text-[#080B11] hover:bg-[#00e676] transition-all active:scale-95 disabled:opacity-50 shadow-md cursor-pointer"
           >
             {saving ? (
               <span>Saving...</span>
             ) : (
               <>
-                <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Save className="h-4 w-4" />
                 <span>Save Predictions</span>
               </>
             )}

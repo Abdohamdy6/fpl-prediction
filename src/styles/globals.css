@@ -4,101 +4,60 @@
 
 @layer base {
   :root {
-    --background: 26 0 34;
-    --foreground: 255 255 255;
+    --background: 14 3 24;
+    --foreground: 248 250 252;
+    --pl-purple: #38003C;
+    --pl-green: #00FF85;
+    --pl-pink: #E90052;
+    --pl-cyan: #04F5FF;
+    --pl-gold: #FFD700;
   }
 }
 
 body {
-  background: radial-gradient(circle at 50% -10%, #4a0058 0%, #22002b 45%, #0f0015 100%);
-  background-attachment: fixed;
-  color: #FFFFFF;
+  background-color: #0c0214;
+  color: #F8FAFC;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
 }
 
-/* Subtle Premier League Geometric Stadium Pattern */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-image: 
-    radial-gradient(rgba(0, 255, 133, 0.08) 1px, transparent 1px),
-    radial-gradient(rgba(233, 0, 82, 0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: 0 0, 20px 20px;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.6;
-}
-
-/* Ambient Top Lighting */
-.ambient-glow-purple {
-  position: fixed;
-  top: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(107, 0, 114, 0.45) 0%, rgba(233, 0, 82, 0.15) 50%, transparent 80%);
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Custom Scrollbar for Premier League aesthetic */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #19001C;
+  background: #0c0214;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4a0058;
+  background: #251233;
   border-radius: 4px;
-  border: 1px solid rgba(0, 255, 133, 0.2);
+  border: 1px solid rgba(0, 255, 133, 0.15);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00FF85;
+  background: #3b1b52;
 }
 
-/* Neon glow utilities */
-.glow-green {
-  box-shadow: 0 0 20px rgba(0, 255, 133, 0.35);
-}
-
-.glow-pink {
-  box-shadow: 0 0 20px rgba(233, 0, 82, 0.35);
-}
-
-.glow-text-green {
-  text-shadow: 0 0 12px rgba(0, 255, 133, 0.6);
-}
-
-.glow-text-pink {
-  text-shadow: 0 0 12px rgba(233, 0, 82, 0.6);
-}
-
-/* Card glassmorphism effect */
+/* Canva-Style Fancy Dark Glass Cards */
 .pl-card {
-  background: rgba(35, 0, 44, 0.78);
-  border: 1px solid rgba(120, 10, 140, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(160deg, rgba(24, 12, 38, 0.85) 0%, rgba(13, 19, 32, 0.88) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pl-card:hover {
-  background: rgba(45, 0, 58, 0.85);
-  border-color: rgba(0, 255, 133, 0.4);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 255, 133, 0.1);
+  border-color: rgba(0, 255, 133, 0.45);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 255, 133, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

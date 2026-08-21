@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Shield, RefreshCw, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { Shield, RefreshCw, Save, CheckCircle2, AlertCircle, Settings } from "lucide-react";
 
 export default function AdminPage() {
   const { data: session } = useSession();
@@ -96,17 +96,17 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-24 sm:pb-20">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-pl-pink/20 border border-pl-pink/40 text-pl-pink shrink-0">
-            <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-slate-800 text-[#00FF85] shrink-0 border border-slate-700">
+            <Shield className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-wider text-white">
+            <h1 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">
               ADMIN CONTROL CENTER
             </h1>
-            <p className="text-[11px] sm:text-xs text-slate-300">
-              Manage live feeds, circuit breakers, and score overrides
+            <p className="text-xs font-bold text-slate-400">
+              Manage live official feeds, circuit breakers, and score overrides
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function AdminPage() {
         <button
           onClick={handleSync}
           disabled={syncing}
-          className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-pl-green px-4 sm:px-5 py-2.5 text-xs font-bold text-pl-purple-deepest hover:bg-pl-green-hover transition-colors glow-green disabled:opacity-50 shadow-md"
+          className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#00FF85] px-5 py-3 text-xs sm:text-sm font-black text-[#080B11] hover:bg-[#00e676] transition-colors shadow-md disabled:opacity-50 cursor-pointer active:scale-95"
         >
           <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
           {syncing ? "Syncing PL Endpoints..." : "Fetch & Sync PL Feeds"}
@@ -123,33 +123,36 @@ export default function AdminPage() {
 
       {feedback && (
         <div
-          className={`flex items-center gap-2 rounded-2xl p-3 sm:p-4 text-xs font-bold border ${
+          className={`flex items-center gap-2.5 rounded-xl p-4 text-xs font-bold border shadow-md ${
             feedback.type === "success"
-              ? "bg-pl-green/15 text-pl-green border-pl-green/40"
-              : "bg-red-500/15 text-red-400 border-red-500/40"
+              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+              : "bg-rose-500/20 text-rose-400 border-rose-500/40"
           }`}
         >
           {feedback.type === "success" ? (
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
           ) : (
-            <AlertCircle className="h-4 w-4 shrink-0" />
+            <AlertCircle className="h-5 w-5 shrink-0 text-rose-400" />
           )}
           <span>{feedback.text}</span>
         </div>
       )}
 
       {/* Fixtures & Score Override Editor */}
-      <div className="pl-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-4 sm:mb-6 border-b border-pl-purple-light/40 pb-3">
-          <h2 className="font-display text-lg sm:text-xl font-bold uppercase text-white">
-            Gameweek {gameweek} Match Overrides
-          </h2>
+      <div className="pl-card rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-800">
+        <div className="flex items-center justify-between mb-5 border-b border-slate-800 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300">GW:</span>
+            <Settings className="h-5 w-5 text-slate-400" />
+            <h2 className="font-display text-lg font-bold uppercase text-white">
+              Gameweek {gameweek} Match Overrides
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400">Select GW:</span>
             <select
               value={gameweek}
               onChange={(e) => setGameweek(parseInt(e.target.value, 10))}
-              className="rounded-lg border border-pl-purple-light bg-pl-purple-deepest px-2.5 py-1 text-xs text-white"
+              className="rounded-lg border border-slate-700 bg-[#121824] px-3 py-1.5 text-xs font-bold text-white cursor-pointer"
             >
               {Array.from({ length: 38 }).map((_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -161,11 +164,11 @@ export default function AdminPage() {
         </div>
 
         {matches.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">
-            No matches loaded. Click &quot;Fetch &amp; Sync PL Feeds&quot; to populate.
+          <div className="py-10 text-center text-xs text-slate-400">
+            No matches loaded for GW {gameweek}. Click &quot;Fetch &amp; Sync PL Feeds&quot; to populate.
           </div>
         ) : (
-          <div className="divide-y divide-pl-purple-light/20">
+          <div className="divide-y divide-slate-800/60">
             {matches.map((match) => {
               const score = scores[match.id] || { home: 0, away: 0, status: "SCHEDULED" };
               const isSaving = savingMatchId === match.id;
@@ -175,27 +178,27 @@ export default function AdminPage() {
                   key={match.id}
                   className="py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
                 >
-                  <div className="flex items-center gap-2 sm:gap-3 w-full md:w-1/2">
+                  <div className="flex items-center gap-2.5 w-full md:w-1/2">
                     <img
                       src={match.homeTeam.crestUrl}
                       alt={match.homeTeam.name}
-                      className="h-6 w-6 sm:h-7 sm:w-7 object-contain shrink-0"
+                      className="h-7 w-7 object-contain shrink-0 filter drop-shadow"
                     />
-                    <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none">
+                    <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[110px] sm:max-w-none">
                       {match.homeTeam.name}
                     </span>
-                    <span className="text-slate-400 font-bold text-xs">vs</span>
-                    <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none">
+                    <span className="text-slate-500 font-bold text-xs uppercase px-1">vs</span>
+                    <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[110px] sm:max-w-none">
                       {match.awayTeam.name}
                     </span>
                     <img
                       src={match.awayTeam.crestUrl}
                       alt={match.awayTeam.name}
-                      className="h-6 w-6 sm:h-7 sm:w-7 object-contain shrink-0"
+                      className="h-7 w-7 object-contain shrink-0 filter drop-shadow"
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
+                  <div className="flex items-center gap-2.5 flex-wrap w-full md:w-auto justify-between md:justify-end">
                     <div className="flex items-center gap-1.5">
                       <input
                         type="number"
@@ -210,9 +213,9 @@ export default function AdminPage() {
                             },
                           }))
                         }
-                        className="w-11 sm:w-14 rounded-lg border border-pl-purple-light bg-pl-purple-deepest px-1.5 py-1 text-center font-display text-base sm:text-lg text-white"
+                        className="w-12 sm:w-14 rounded-lg border border-slate-700 bg-[#0b0f17] px-2 py-1.5 text-center font-display text-base sm:text-lg font-black text-white tabular-nums"
                       />
-                      <span className="font-bold text-slate-400">:</span>
+                      <span className="font-bold text-slate-500">:</span>
                       <input
                         type="number"
                         min={0}
@@ -226,7 +229,7 @@ export default function AdminPage() {
                             },
                           }))
                         }
-                        className="w-11 sm:w-14 rounded-lg border border-pl-purple-light bg-pl-purple-deepest px-1.5 py-1 text-center font-display text-base sm:text-lg text-white"
+                        className="w-12 sm:w-14 rounded-lg border border-slate-700 bg-[#0b0f17] px-2 py-1.5 text-center font-display text-base sm:text-lg font-black text-white tabular-nums"
                       />
                     </div>
 
@@ -241,7 +244,7 @@ export default function AdminPage() {
                           },
                         }))
                       }
-                      className="rounded-lg border border-pl-purple-light bg-pl-purple-deepest px-2 py-1 text-xs text-white"
+                      className="rounded-lg border border-slate-700 bg-[#121824] px-2.5 py-1.5 text-xs font-bold text-white cursor-pointer"
                     >
                       <option value="SCHEDULED">Scheduled</option>
                       <option value="IN_PLAY">Live In-Play</option>
@@ -252,9 +255,9 @@ export default function AdminPage() {
                     <button
                       onClick={() => handleScoreOverride(match.id)}
                       disabled={isSaving}
-                      className="flex items-center gap-1 rounded-lg bg-pl-purple-light border border-pl-green/40 px-2.5 sm:px-3 py-1 text-xs font-bold text-pl-green hover:bg-pl-purple-accent transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1.5 rounded-lg bg-[#00FF85] px-3 py-1.5 text-xs font-black text-[#080B11] hover:bg-[#00e676] transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
                     >
-                      <Save className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      <Save className="h-3.5 w-3.5" />
                       {isSaving ? "Saving..." : "Settle"}
                     </button>
                   </div>

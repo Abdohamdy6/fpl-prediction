@@ -40,7 +40,7 @@ export default function ScoreStepper({
   };
 
   return (
-    <div className="w-full flex items-center justify-center gap-1.5 sm:gap-2">
+    <div className="w-full flex items-center justify-center gap-1.5 sm:gap-2 select-none">
       {/* Minus Button */}
       <button
         type="button"
@@ -48,16 +48,16 @@ export default function ScoreStepper({
         disabled={disabled || value <= 0}
         aria-label={`Decrease ${teamName} score`}
         className={cn(
-          "flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-pl-purple-light bg-pl-purple-deepest text-white transition-all active:scale-90 select-none shadow-sm",
+          "flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border transition-all active:scale-95 shadow-sm",
           disabled || value <= 0
-            ? "opacity-25 cursor-not-allowed"
-            : "hover:bg-pl-purple-light hover:border-pl-green/50 hover:text-pl-green active:bg-pl-purple-accent cursor-pointer"
+            ? "border-slate-800 bg-[#0d121c] text-slate-600 opacity-40 cursor-not-allowed"
+            : "border-slate-700 bg-[#121824] text-white hover:bg-slate-700 hover:border-slate-500 cursor-pointer"
         )}
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="h-4 w-4 stroke-[2.5]" />
       </button>
 
-      {/* Direct Numeric Input Box (Type or Tap) */}
+      {/* Digital Score Input Display */}
       <div className="relative">
         <input
           type="number"
@@ -70,14 +70,14 @@ export default function ScoreStepper({
           disabled={disabled}
           aria-label={`${teamName} predicted score`}
           className={cn(
-            "h-10 w-12 sm:h-11 sm:w-14 rounded-xl border text-center font-display text-2xl font-bold transition-all shadow-inner focus:outline-none",
+            "h-10 w-12 sm:h-11 sm:w-14 rounded-xl border text-center font-display text-2xl sm:text-3xl font-black tabular-nums transition-all shadow-inner focus:outline-none",
             disabled
-              ? "border-slate-800 bg-pl-purple-deepest/90 text-slate-400 cursor-not-allowed"
-              : "border-pl-purple-light bg-pl-purple-deepest text-white focus:border-pl-green focus:ring-1 focus:ring-pl-green glow-green"
+              ? "border-slate-800 bg-[#0a0e16] text-slate-500 cursor-not-allowed"
+              : "border-slate-700 bg-[#0b0f17] text-white focus:border-[#00FF85] focus:ring-2 focus:ring-[#00FF85]/20"
           )}
         />
         {disabled && (
-          <Lock className="h-3 w-3 absolute top-1 right-1 text-slate-500 pointer-events-none" />
+          <Lock className="h-3 w-3 absolute top-1.5 right-1.5 text-slate-500 pointer-events-none" />
         )}
       </div>
 
@@ -88,13 +88,13 @@ export default function ScoreStepper({
         disabled={disabled || value >= 20}
         aria-label={`Increase ${teamName} score`}
         className={cn(
-          "flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-pl-purple-light bg-pl-purple-deepest text-white transition-all active:scale-90 select-none shadow-sm",
+          "flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border transition-all active:scale-95 shadow-sm",
           disabled || value >= 20
-            ? "opacity-25 cursor-not-allowed"
-            : "hover:bg-pl-purple-light hover:border-pl-green/50 hover:text-pl-green active:bg-pl-purple-accent cursor-pointer"
+            ? "border-slate-800 bg-[#0d121c] text-slate-600 opacity-40 cursor-not-allowed"
+            : "border-slate-700 bg-[#121824] text-white hover:bg-slate-700 hover:border-slate-500 cursor-pointer"
         )}
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-4 w-4 stroke-[2.5]" />
       </button>
     </div>
   );

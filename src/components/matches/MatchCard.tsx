@@ -66,18 +66,27 @@ export default function MatchCard({
   const isMatchFinished = match.status === "FINISHED";
   const isLocked = match.isLocked || isMatchLive || isMatchFinished;
 
+  const quickPresets = [
+    { label: "1 - 0", h: 1, a: 0 },
+    { label: "2 - 1", h: 2, a: 1 },
+    { label: "1 - 1", h: 1, a: 1 },
+    { label: "2 - 0", h: 2, a: 0 },
+    { label: "1 - 2", h: 1, a: 2 },
+    { label: "0 - 1", h: 0, a: 1 },
+  ];
+
   return (
-    <div className="pl-card group relative flex flex-col justify-between overflow-hidden rounded-2xl p-3.5 sm:p-5 shadow-2xl transition-all hover:border-pl-green/50">
-      {/* Top Header: Kickoff Time, Channel Broadcaster & Lock Countdown */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 border-b border-pl-purple-light/40 pb-2.5 text-xs text-slate-300">
+    <div className="pl-card relative flex flex-col justify-between overflow-hidden rounded-2xl p-4 sm:p-5 shadow-lg">
+      {/* Top Header: Kickoff Date, Broadcaster & Countdown */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3 text-xs text-slate-400">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <span className="font-semibold text-slate-200 text-[11px] sm:text-xs" suppressHydrationWarning>
+          <span className="font-bold text-slate-200 text-[11px] sm:text-xs tracking-wide" suppressHydrationWarning>
             {formatDate(match.kickoffTime)}
           </span>
           {match.broadcastInfo && (
-            <span className="flex items-center gap-1 text-slate-300 text-[10px] sm:text-xs">
-              <Tv className="h-3.5 w-3.5 text-pl-cyan shrink-0" />
-              <span className="truncate max-w-[150px] sm:max-w-none">{match.broadcastInfo}</span>
+            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#121824] border border-slate-700/80 text-slate-300 text-[10px] sm:text-[11px] font-semibold">
+              <Tv className="h-3 w-3 text-sky-400 shrink-0" />
+              <span className="truncate max-w-[140px] sm:max-w-none">{match.broadcastInfo}</span>
             </span>
           )}
         </div>
@@ -86,130 +95,153 @@ export default function MatchCard({
         </div>
       </div>
 
-      {/* Main Fixture Section: Scores positioned clearly UNDER each team */}
+      {/* Main Fixture Display */}
       {isMatchLive || isMatchFinished ? (
         /* Finished or Live Match Scoreboard */
         <div className="my-4 flex flex-col items-center">
           <div className="w-full grid grid-cols-2 gap-3 items-center mb-3">
-            {/* Home */}
+            {/* Home Team */}
             <div className="flex flex-col items-center text-center">
               <img
                 src={match.homeTeam.crestUrl}
                 alt={match.homeTeam.name}
-                className="h-12 w-12 sm:h-14 sm:w-14 object-contain mb-1.5"
+                className="h-12 w-12 sm:h-14 sm:w-14 object-contain mb-1.5 filter drop-shadow-md"
                 loading="lazy"
               />
-              <span className="font-display text-sm sm:text-base font-bold uppercase text-white truncate max-w-[120px]">
+              <span className="font-display text-base font-bold uppercase text-white truncate max-w-[130px]">
                 {match.homeTeam.shortName || match.homeTeam.name}
               </span>
-              <span className="text-[10px] font-bold text-pl-green">HOME</span>
+              <span className="text-[10px] font-bold text-[#00FF85] uppercase tracking-wider">HOME</span>
             </div>
 
-            {/* Away */}
+            {/* Away Team */}
             <div className="flex flex-col items-center text-center">
               <img
                 src={match.awayTeam.crestUrl}
                 alt={match.awayTeam.name}
-                className="h-12 w-12 sm:h-14 sm:w-14 object-contain mb-1.5"
+                className="h-12 w-12 sm:h-14 sm:w-14 object-contain mb-1.5 filter drop-shadow-md"
                 loading="lazy"
               />
-              <span className="font-display text-sm sm:text-base font-bold uppercase text-white truncate max-w-[120px]">
+              <span className="font-display text-base font-bold uppercase text-white truncate max-w-[130px]">
                 {match.awayTeam.shortName || match.awayTeam.name}
               </span>
-              <span className="text-[10px] font-bold text-pl-pink">AWAY</span>
+              <span className="text-[10px] font-bold text-[#E90052] uppercase tracking-wider">AWAY</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-2xl bg-pl-purple-deepest px-6 py-2 border border-pl-purple-light shadow-inner">
-            <span className="font-display text-3xl sm:text-4xl font-extrabold text-white">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#0b0f17] border border-slate-800 text-white px-7 py-2.5 shadow-inner">
+            <span className="font-display text-3xl sm:text-4xl font-black tabular-nums text-white">
               {match.homeScore ?? 0}
             </span>
-            <span className="text-slate-500 font-bold text-xl">:</span>
-            <span className="font-display text-3xl sm:text-4xl font-extrabold text-white">
+            <span className="text-[#00FF85] font-bold text-2xl">:</span>
+            <span className="font-display text-3xl sm:text-4xl font-black tabular-nums text-white">
               {match.awayScore ?? 0}
             </span>
           </div>
-          <span className="mt-1 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-pl-green">
-            {isMatchLive ? "🔴 Live Score" : "Full Time Result"}
+          <span className="mt-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">
+            {isMatchLive ? "🔴 Live Match Score" : "Full Time Result"}
           </span>
         </div>
       ) : (
-        /* Active Prediction: 2 Spacious Columns with Score Stepper/Input UNDER each team */
-        <div className="my-3.5 sm:my-4 grid grid-cols-2 gap-2.5 sm:gap-4 items-stretch">
-          {/* HOME TEAM BLOCK */}
-          <div className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-pl-purple-deeper/60 border border-pl-purple-light/30 shadow-md">
-            <div className="flex flex-col items-center text-center mb-2 sm:mb-3">
-              <div className="relative mb-1.5 h-12 w-12 sm:h-16 sm:w-16 transition-transform group-hover:scale-105">
+        /* Active Prediction Scoreboard */
+        <div className="my-3.5 sm:my-4 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3 items-stretch">
+            {/* HOME TEAM BLOCK */}
+            <div className="flex flex-col items-center justify-between p-3.5 rounded-xl bg-[#0d121c]/80 border border-slate-800/80">
+              <div className="flex flex-col items-center text-center mb-2.5">
                 <img
                   src={match.homeTeam.crestUrl}
                   alt={match.homeTeam.name}
-                  className="h-full w-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain mb-1.5 filter drop-shadow"
                   loading="lazy"
                 />
+                <span className="font-display text-sm sm:text-base font-bold uppercase text-white line-clamp-1">
+                  {match.homeTeam.shortName || match.homeTeam.name}
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#00FF85] uppercase tracking-wider">
+                  HOME
+                </span>
               </div>
-              <span className="font-display text-sm sm:text-base font-bold uppercase tracking-wider text-white line-clamp-1">
-                {match.homeTeam.shortName || match.homeTeam.name}
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-bold text-pl-green uppercase tracking-wider">
-                HOME
-              </span>
+
+              <ScoreStepper
+                value={homeScore}
+                onChange={onHomeScoreChange}
+                disabled={isLocked}
+                teamName={match.homeTeam.name}
+              />
             </div>
 
-            {/* Score Stepper Directly Under Home Team */}
-            <ScoreStepper
-              value={homeScore}
-              onChange={onHomeScoreChange}
-              disabled={isLocked}
-              teamName={match.homeTeam.name}
-            />
-          </div>
-
-          {/* AWAY TEAM BLOCK */}
-          <div className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-pl-purple-deeper/60 border border-pl-purple-light/30 shadow-md">
-            <div className="flex flex-col items-center text-center mb-2 sm:mb-3">
-              <div className="relative mb-1.5 h-12 w-12 sm:h-16 sm:w-16 transition-transform group-hover:scale-105">
+            {/* AWAY TEAM BLOCK */}
+            <div className="flex flex-col items-center justify-between p-3.5 rounded-xl bg-[#0d121c]/80 border border-slate-800/80">
+              <div className="flex flex-col items-center text-center mb-2.5">
                 <img
                   src={match.awayTeam.crestUrl}
                   alt={match.awayTeam.name}
-                  className="h-full w-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
+                  className="h-12 w-12 sm:h-14 sm:w-14 object-contain mb-1.5 filter drop-shadow"
                   loading="lazy"
                 />
+                <span className="font-display text-sm sm:text-base font-bold uppercase text-white line-clamp-1">
+                  {match.awayTeam.shortName || match.awayTeam.name}
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#E90052] uppercase tracking-wider">
+                  AWAY
+                </span>
               </div>
-              <span className="font-display text-sm sm:text-base font-bold uppercase tracking-wider text-white line-clamp-1">
-                {match.awayTeam.shortName || match.awayTeam.name}
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-bold text-pl-pink uppercase tracking-wider">
-                AWAY
-              </span>
-            </div>
 
-            {/* Score Stepper Directly Under Away Team */}
-            <ScoreStepper
-              value={awayScore}
-              onChange={onAwayScoreChange}
-              disabled={isLocked}
-              teamName={match.awayTeam.name}
-            />
+              <ScoreStepper
+                value={awayScore}
+                onChange={onAwayScoreChange}
+                disabled={isLocked}
+                teamName={match.awayTeam.name}
+              />
+            </div>
           </div>
+
+          {/* Quick Score Chips */}
+          {!isLocked && (
+            <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Quick Pick:</span>
+              {quickPresets.map((preset) => {
+                const isSelected = homeScore === preset.h && awayScore === preset.a;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      onHomeScoreChange(preset.h);
+                      onAwayScoreChange(preset.a);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-display font-bold tabular-nums transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#00FF85] text-[#080B11] shadow-md font-extrabold scale-105"
+                        : "bg-[#101622] text-slate-300 hover:bg-slate-800 border border-slate-800"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Prediction Settlement Status Badge (If match finished / evaluated) */}
+      {/* Prediction Settlement Status Badge */}
       {match.userPrediction && isMatchFinished && (
         <div className="mt-1 flex items-center justify-center">
           {match.userPrediction.isExactHit ? (
-            <span className="flex items-center gap-1 rounded-lg bg-pl-green/20 border border-pl-green/50 px-2.5 py-1 text-[11px] font-bold text-pl-green">
-              <Award className="h-3.5 w-3.5" />
-              +3 PTS EXACT HIT!
+            <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-xs font-black text-emerald-400">
+              <Award className="h-4 w-4" />
+              +3 PTS EXACT SCORE HIT!
             </span>
           ) : match.userPrediction.isOutcomeHit ? (
-            <span className="flex items-center gap-1 rounded-lg bg-pl-cyan/20 border border-pl-cyan/50 px-2.5 py-1 text-[11px] font-bold text-pl-cyan">
-              <CheckCircle2 className="h-3.5 w-3.5" />
+            <span className="flex items-center gap-1.5 rounded-lg bg-sky-500/20 border border-sky-500/40 px-3 py-1 text-xs font-black text-sky-400">
+              <CheckCircle2 className="h-4 w-4" />
               +1 PT CORRECT OUTCOME
             </span>
           ) : (
-            <span className="rounded-lg bg-slate-800/90 border border-slate-700 px-2.5 py-1 text-[10px] font-semibold text-slate-400">
-              0 PTS ({match.userPrediction.predictedHomeScore}-{match.userPrediction.predictedAwayScore})
+            <span className="rounded-lg bg-slate-800/80 border border-slate-700 px-3 py-1 text-[11px] font-bold text-slate-400">
+              0 PTS (Predicted {match.userPrediction.predictedHomeScore}-{match.userPrediction.predictedAwayScore})
             </span>
           )}
         </div>

@@ -51,16 +51,16 @@ export default function CountdownTimer({ kickoffTime, status }: CountdownTimerPr
 
   if (!mounted) {
     return (
-      <span className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold bg-pl-purple-dark text-slate-400 border border-slate-800">
+      <span className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold bg-slate-800/80 text-slate-400 border border-slate-700">
         <Clock className="h-3 w-3" />
-        LOADING...
+        Syncing...
       </span>
     );
   }
 
   if (status === "IN_PLAY") {
     return (
-      <span className="flex items-center gap-1 rounded-full bg-pl-pink/20 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-pl-pink border border-pl-pink/40 animate-pulse">
+      <span className="flex items-center gap-1 rounded-full bg-rose-500/20 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-rose-400 border border-rose-500/40 animate-pulse">
         <Radio className="h-3 w-3 animate-spin" />
         LIVE IN PLAY
       </span>
@@ -69,7 +69,7 @@ export default function CountdownTimer({ kickoffTime, status }: CountdownTimerPr
 
   if (status === "FINISHED") {
     return (
-      <span className="flex items-center gap-1 rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold text-slate-300 border border-slate-700">
+      <span className="flex items-center gap-1 rounded-full bg-slate-800/90 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-slate-300 border border-slate-700">
         FULL TIME
       </span>
     );
@@ -77,7 +77,7 @@ export default function CountdownTimer({ kickoffTime, status }: CountdownTimerPr
 
   if (timeLeft.isPast) {
     return (
-      <span className="flex items-center gap-1 rounded-full bg-pl-purple-dark px-2.5 py-0.5 text-[10px] sm:text-xs font-medium text-slate-400 border border-slate-800">
+      <span className="flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-slate-500 border border-slate-800">
         <Lock className="h-3 w-3 text-slate-500" />
         LOCKED
       </span>
@@ -98,10 +98,10 @@ export default function CountdownTimer({ kickoffTime, status }: CountdownTimerPr
   return (
     <span
       className={cn(
-        "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold border transition-colors",
+        "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-bold border transition-colors tabular-nums",
         isUrgent
-          ? "bg-pl-pink/15 text-pl-pink border-pl-pink/30 animate-pulse"
-          : "bg-pl-purple-dark text-pl-green border-pl-green/30"
+          ? "bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse"
+          : "bg-[#101622] text-[#00FF85] border-slate-700/80"
       )}
     >
       <Clock className="h-3 w-3" />
