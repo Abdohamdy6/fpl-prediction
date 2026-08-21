@@ -26,6 +26,7 @@ model User {
   predictions         Prediction[]
   createdLeagues      League[]       @relation("LeagueCreator")
   leagueMemberships   LeagueMember[]
+  seasonTablePrediction SeasonTablePrediction?
 
   @@index([totalPoints])
 }
@@ -107,6 +108,21 @@ model Prediction {
   @@unique([userId, matchId])
   @@index([userId, gameweekId])
   @@index([matchId])
+}
+
+model SeasonTablePrediction {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  season      Int      @default(2026) // 2026/27 Season
+  rankings    String   // JSON stringified array of club IDs in 1-20 order
+  pointsEarned Int     @default(0)
+  isSettled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([season])
 }
 
 model League {

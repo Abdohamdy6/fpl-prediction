@@ -5,15 +5,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Format match kickoff time in Egypt Time (Africa/Cairo - UTC+3)
+ * Note: Database & server calculations remain strictly in UTC.
+ */
 export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
+  const d = new Date(date);
+  const formatted = new Intl.DateTimeFormat("en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC",
-  }).format(new Date(date)) + " UTC";
+    timeZone: "Africa/Cairo",
+  }).format(d);
+
+  return `${formatted} (Cairo)`;
 }
 
 export function generateLeagueCode(): string {

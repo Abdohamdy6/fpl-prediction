@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { Trophy, Calendar, Users, LayoutDashboard, Shield, LogOut, LogIn, UserPlus } from "lucide-react";
+import {
+  Trophy,
+  Calendar,
+  Users,
+  LayoutDashboard,
+  Shield,
+  LogOut,
+  LogIn,
+  UserPlus,
+  ListOrdered,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Navigation() {
@@ -12,6 +22,7 @@ export default function Navigation() {
 
   const navItems = [
     { href: "/predict", label: "Predict", icon: Calendar },
+    { href: "/season-table", label: "Table 1-20", icon: ListOrdered },
     { href: "/leaderboard", label: "Rankings", icon: Trophy },
     { href: "/leagues", label: "Leagues", icon: Users },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -47,7 +58,7 @@ export default function Navigation() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+                    "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs lg:text-sm font-medium transition-all",
                     isActive
                       ? "bg-pl-purple-light text-pl-green font-semibold shadow-inner"
                       : "text-slate-300 hover:bg-pl-purple-deeper hover:text-white"
@@ -114,8 +125,8 @@ export default function Navigation() {
         </div>
       </header>
 
-      {/* Mobile Bottom Tab Bar (App Experience) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-pl-purple-light/50 bg-pl-purple-deepest/95 backdrop-blur-xl px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      {/* Mobile Bottom Tab Bar (App Experience with 5 tabs) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-pl-purple-light/50 bg-pl-purple-deepest/95 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
         <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -125,7 +136,7 @@ export default function Navigation() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all",
+                  "flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all",
                   isActive
                     ? "text-pl-green font-bold"
                     : "text-slate-400 hover:text-slate-200"
@@ -139,7 +150,7 @@ export default function Navigation() {
                 >
                   <Icon className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-medium tracking-tight mt-0.5">
+                <span className="text-[9px] font-medium tracking-tight mt-0.5">
                   {item.label}
                 </span>
               </Link>
