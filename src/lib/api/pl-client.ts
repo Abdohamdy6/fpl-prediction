@@ -54,6 +54,30 @@ export const OFFICIAL_CLUB_MAP: Record<
   "39": { shortName: "Wolves", abbr: "WOL", primaryColor: "#FDB913", secondaryColor: "#231F20" },
 };
 
+// Map FPL team index (1-20) to Premier League official Club ID (Code)
+export const FPL_ID_TO_CLUB_CODE: Record<number, string> = {
+  1: "3",   // Arsenal
+  2: "7",   // Aston Villa
+  3: "91",  // Bournemouth
+  4: "94",  // Brentford
+  5: "36",  // Brighton
+  6: "8",   // Chelsea
+  7: "9",   // Coventry
+  8: "31",  // Crystal Palace
+  9: "11",  // Everton
+  10: "54", // Fulham
+  11: "88", // Hull City
+  12: "40", // Ipswich
+  13: "2",  // Leeds
+  14: "14", // Liverpool
+  15: "43", // Man City
+  16: "1",  // Man Utd
+  17: "4",  // Newcastle
+  18: "17", // Nott'm Forest
+  19: "6",  // Spurs
+  20: "56", // Sunderland
+};
+
 /**
  * Fetch 20 Club profiles, colors, badges, and stadiums
  */
@@ -93,9 +117,23 @@ export async function fetchGameweekMatches(matchweek: number, season = 2026): Pr
   try {
     const url = `https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=${season}&matchweek=${matchweek}&_limit=20`;
     const { data } = await axios.get(url, { headers: PL_DEFAULT_HEADERS, timeout: 8000 });
-    return data.content || data.matches || data || [];
+    return data.data || data.content || data.matches || (Array.isArray(data) ? data : []);
   } catch (error) {
-    console.error(`Failed to fetch matches for Matchweek ${matchweek}:`, error);
+    console.error(`Failed to fetch PulseLive matches for Matchweek ${matchweek}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Fallback: Fetch Fixtures from Fantasy Premier League endpoint
+ */
+export async function fetchFPLFixtures(event: number): Promise<any[]> {
+  try {
+    const url = `https://fantasy.premierleague.com/api/fixtures/?event=${event}`;
+    const { data } = await axios.get(url, { headers: PL_DEFAULT_HEADERS, timeout: 8000 });
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error(`Failed to fetch FPL fixtures for Event ${event}:`, error);
     return [];
   }
 }
@@ -110,16 +148,26 @@ export async function fetchBroadcastDetails(sportDataIds: string[]): Promise<Rec
     const { data } = await axios.get(url, { headers: PL_DEFAULT_HEADERS, timeout: 8000 });
 
     const broadcastMap: Record<string, string> = {};
-    if (Array.isArray(data)) {
-      for (const item of data) {
-        const id = String(item.sportDataId || item.id);
-        const broadcaster =
-          item.programme?.broadcasters?.[0]?.name ||
-          item.broadcasters?.[0]?.name ||
-          "Sky Sports / TNT / beIN";
-        broadcastMap[id] = broadcaster;
+    const items = data.content || data.data || (Array.isArray(data) ? data : []);
+
+    for (const item of items) {
+      const id = String(item.contentReference?.id || item.sportDataId || item.id);
+      let channelName = "Sky Sports / TNT / beIN";
+
+      if (item.programmes && item.programmes.length > 0) {
+        const prog = item.programmes[0];
+        if (prog.channels && prog.channels.length > 0) {
+          channelName = prog.channels[0].name || channelName;
+        } else if (prog.broadcasters && prog.broadcasters.length > 0) {
+          channelName = prog.broadcasters[0].name || channelName;
+        }
+      } else if (item.broadcasters && item.broadcasters.length > 0) {
+        channelName = item.broadcasters[0].name || channelName;
       }
+
+      broadcastMap[id] = channelName;
     }
+
     return broadcastMap;
   } catch (error) {
     console.warn("Broadcasting fetch warning:", error);
@@ -128,14 +176,19 @@ export async function fetchBroadcastDetails(sportDataIds: string[]): Promise<Rec
 }
 
 /**
- * Sync Clubs into Database
+ * Sync All 20 Clubs into Database
  */
 export async function syncClubs(): Promise<number> {
   const clubs = await fetchClubsMetadata();
-  if (!clubs.length) return 0;
+  const clubsToProcess = clubs.length > 0 ? clubs : Object.entries(OFFICIAL_CLUB_MAP).map(([id, meta]) => ({
+    id,
+    name: meta.shortName,
+    shortName: meta.shortName,
+    abbr: meta.abbr,
+  }));
 
   let count = 0;
-  for (const club of clubs) {
+  for (const club of clubsToProcess) {
     const id = String(club.id);
     const meta = OFFICIAL_CLUB_MAP[id];
     const name = club.name || meta?.shortName || `Club ${id}`;
@@ -169,4 +222,151 @@ export async function syncClubs(): Promise<number> {
     count++;
   }
   return count;
+}
+
+/**
+ * Automatically Sync Any Gameweek from Premier League Endpoints (PulseLive SDP & Broadcasting)
+ */
+export async function syncGameweek(gameweekNumber: number): Promise<{
+  gameweek: number;
+  matchesSynced: number;
+}> {
+  console.log(`[Auto-Sync] Fetching Premier League feeds for Gameweek ${gameweekNumber}...`);
+  await syncClubs();
+
+  // 1. Try PulseLive SDP
+  let matchesData = await fetchGameweekMatches(gameweekNumber);
+  let isPulseLive = true;
+
+  // 2. If PulseLive is empty, fallback to FPL fixtures
+  if (!matchesData || matchesData.length === 0) {
+    console.log(`[Auto-Sync] Falling back to FPL fixtures for GW ${gameweekNumber}...`);
+    matchesData = await fetchFPLFixtures(gameweekNumber);
+    isPulseLive = false;
+  }
+
+  if (!matchesData || matchesData.length === 0) {
+    console.warn(`[Auto-Sync] No matches found for GW ${gameweekNumber}`);
+    return { gameweek: gameweekNumber, matchesSynced: 0 };
+  }
+
+  // 3. Extract sportDataIds to fetch TV broadcast info
+  const sportDataIds: string[] = [];
+  for (const m of matchesData) {
+    const id = isPulseLive ? String(m.matchId || m.id) : String(m.code || m.id);
+    if (id) sportDataIds.push(id);
+  }
+
+  const broadcastMap = await fetchBroadcastDetails(sportDataIds);
+
+  // 4. Calculate earliest kickoff as Gameweek deadline
+  let earliestKickoff: Date | null = null;
+  const parsedMatches: Array<{
+    sportDataId: string;
+    homeTeamId: string;
+    awayTeamId: string;
+    kickoffTime: Date;
+    broadcastInfo: string;
+    status: string;
+  }> = [];
+
+  for (const m of matchesData) {
+    let sportDataId: string;
+    let homeTeamId: string;
+    let awayTeamId: string;
+    let kickoffTime: Date;
+    let status = "SCHEDULED";
+
+    if (isPulseLive) {
+      sportDataId = String(m.matchId || m.id);
+      homeTeamId = String(m.homeTeam?.id || m.teams?.[0]?.team?.id);
+      awayTeamId = String(m.awayTeam?.id || m.teams?.[1]?.team?.id);
+
+      const kickoffStr = m.kickoff || m.kickoffTime || m.kickoffTimezone;
+      kickoffTime = kickoffStr ? new Date(kickoffStr) : new Date();
+
+      if (m.period === "FullTime" || m.status === "C") status = "FINISHED";
+      else if (m.period === "FirstHalf" || m.period === "SecondHalf" || m.status === "I") status = "IN_PLAY";
+    } else {
+      // FPL format
+      sportDataId = String(m.code || m.id);
+      homeTeamId = FPL_ID_TO_CLUB_CODE[m.team_h] || String(m.team_h);
+      awayTeamId = FPL_ID_TO_CLUB_CODE[m.team_a] || String(m.team_a);
+      kickoffTime = m.kickoff_time ? new Date(m.kickoff_time) : new Date();
+
+      if (m.finished) status = "FINISHED";
+      else if (m.started) status = "IN_PLAY";
+    }
+
+    if (!earliestKickoff || kickoffTime < earliestKickoff) {
+      earliestKickoff = kickoffTime;
+    }
+
+    const broadcast = broadcastMap[sportDataId] || (
+      isPulseLive ? "Sky Sports / beIN / TOD" : "Premier League Live"
+    );
+
+    parsedMatches.push({
+      sportDataId,
+      homeTeamId,
+      awayTeamId,
+      kickoffTime,
+      broadcastInfo: broadcast,
+      status,
+    });
+  }
+
+  // Set Gameweek deadline to 90 minutes before first match
+  const deadline = earliestKickoff
+    ? new Date(earliestKickoff.getTime() - 90 * 60 * 1000)
+    : new Date();
+
+  // 5. Upsert Gameweek in DB
+  const currentGw = await fetchCurrentGameweek();
+  await db.gameweek.upsert({
+    where: { id: gameweekNumber },
+    update: {
+      name: `Gameweek ${gameweekNumber}`,
+      deadline,
+      isCurrent: gameweekNumber === currentGw,
+    },
+    create: {
+      id: gameweekNumber,
+      name: `Gameweek ${gameweekNumber}`,
+      deadline,
+      isCurrent: gameweekNumber === currentGw,
+    },
+  });
+
+  // 6. Upsert All Matches in DB
+  let synced = 0;
+  for (const match of parsedMatches) {
+    // Ensure home and away clubs exist
+    await db.match.upsert({
+      where: { sportDataId: match.sportDataId },
+      update: {
+        gameweekId: gameweekNumber,
+        homeTeamId: match.homeTeamId,
+        awayTeamId: match.awayTeamId,
+        kickoffTime: match.kickoffTime,
+        lockTime: match.kickoffTime,
+        broadcastInfo: match.broadcastInfo,
+        status: match.status,
+      },
+      create: {
+        sportDataId: match.sportDataId,
+        gameweekId: gameweekNumber,
+        homeTeamId: match.homeTeamId,
+        awayTeamId: match.awayTeamId,
+        kickoffTime: match.kickoffTime,
+        lockTime: match.kickoffTime,
+        broadcastInfo: match.broadcastInfo,
+        status: match.status,
+      },
+    });
+    synced++;
+  }
+
+  console.log(`[Auto-Sync] Gameweek ${gameweekNumber} synced successfully (${synced} fixtures)!`);
+  return { gameweek: gameweekNumber, matchesSynced: synced };
 }

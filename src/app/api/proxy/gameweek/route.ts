@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { fetchCurrentGameweek } from "@/lib/api/pl-client";
+import { fetchCurrentGameweek, syncGameweek } from "@/lib/api/pl-client";
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       gameweekId = 1;
     }
 
-    // Ensure Gameweek record exists
+    // Check if Gameweek exists and has matches
     let gameweek = await db.gameweek.findUnique({
       where: { id: gameweekId },
       include: {
@@ -32,16 +32,14 @@ export async function GET(req: Request) {
       },
     });
 
-    if (!gameweek) {
-      const deadline = new Date();
-      deadline.setDate(deadline.getDate() + 3);
-      gameweek = await db.gameweek.create({
-        data: {
-          id: gameweekId,
-          name: `Gameweek ${gameweekId}`,
-          deadline,
-          isCurrent: gameweekId === 1,
-        },
+    // AUTO-SYNC: If Gameweek does not exist or has 0 matches, fetch automatically from Premier League
+    if (!gameweek || gameweek.matches.length === 0) {
+      console.log(`[Proxy] Auto-syncing Gameweek ${gameweekId} on-demand...`);
+      await syncGameweek(gameweekId);
+
+      // Re-fetch populated gameweek
+      gameweek = await db.gameweek.findUnique({
+        where: { id: gameweekId },
         include: {
           matches: {
             include: {
@@ -49,9 +47,14 @@ export async function GET(req: Request) {
               awayTeam: true,
               predictions: true,
             },
+            orderBy: { kickoffTime: "asc" },
           },
         },
       });
+    }
+
+    if (!gameweek) {
+      return NextResponse.json({ error: "Gameweek not found" }, { status: 404 });
     }
 
     const now = new Date();

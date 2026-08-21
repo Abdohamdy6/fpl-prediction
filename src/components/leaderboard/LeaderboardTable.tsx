@@ -32,12 +32,12 @@ export default function LeaderboardTable({ users, currentUserId }: LeaderboardTa
   );
 
   return (
-    <div className="pl-card overflow-hidden rounded-2xl shadow-xl">
+    <div className="pl-card overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl">
       {/* Search Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-pl-purple-light/40 p-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-pl-purple-light/40 p-3.5 sm:p-5">
         <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-pl-gold" />
-          <h2 className="font-display text-xl font-bold tracking-wider text-white">
+          <Trophy className="h-5 w-5 text-pl-gold shrink-0" />
+          <h2 className="font-display text-lg sm:text-xl font-bold tracking-wider text-white">
             GLOBAL STANDINGS
           </h2>
         </div>
@@ -49,35 +49,34 @@ export default function LeaderboardTable({ users, currentUserId }: LeaderboardTa
             placeholder="Search predictor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-pl-purple-light bg-pl-purple-deepest py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-pl-green focus:outline-none focus:ring-1 focus:ring-pl-green"
+            className="w-full rounded-xl border border-pl-purple-light bg-pl-purple-deepest py-1.5 pl-9 pr-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:border-pl-green focus:outline-none focus:ring-1 focus:ring-pl-green"
           />
         </div>
       </div>
 
       {/* Standings Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-pl-purple-light/30 bg-pl-purple-deeper text-xs uppercase tracking-wider text-slate-400">
+        <table className="w-full text-left text-xs sm:text-sm">
+          <thead className="border-b border-pl-purple-light/30 bg-pl-purple-deeper text-[10px] sm:text-xs uppercase tracking-wider text-slate-400">
             <tr>
-              <th className="py-3.5 pl-5 pr-2 font-semibold">Rank</th>
-              <th className="px-4 py-3.5 font-semibold">Predictor</th>
-              <th className="px-4 py-3.5 font-semibold text-center hidden sm:table-cell">Club</th>
-              <th className="px-4 py-3.5 font-semibold text-center">Exact (3pt)</th>
-              <th className="px-4 py-3.5 font-semibold text-center">Outcome (1pt)</th>
-              <th className="py-3.5 pl-4 pr-5 font-bold text-right text-pl-green">Pts</th>
+              <th className="py-2.5 pl-3 sm:pl-5 pr-1 font-semibold w-12 sm:w-16">Rank</th>
+              <th className="px-2.5 sm:px-4 py-2.5 font-semibold">Predictor</th>
+              <th className="px-2 sm:px-4 py-2.5 font-semibold text-center hidden sm:table-cell">Club</th>
+              <th className="px-2 sm:px-4 py-2.5 font-semibold text-center">Exact</th>
+              <th className="px-2 sm:px-4 py-2.5 font-semibold text-center hidden xs:table-cell">Outcome</th>
+              <th className="py-2.5 pl-2 sm:pl-4 pr-3 sm:pr-5 font-bold text-right text-pl-green">Pts</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-pl-purple-light/20">
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400">
+                <td colSpan={6} className="py-8 text-center text-xs sm:text-sm text-slate-400">
                   No predictors found.
                 </td>
               </tr>
             ) : (
               filteredUsers.map((user) => {
                 const isCurrentUser = user.id === currentUserId;
-                const isTop3 = user.rank <= 3;
 
                 return (
                   <tr
@@ -90,39 +89,48 @@ export default function LeaderboardTable({ users, currentUserId }: LeaderboardTa
                     )}
                   >
                     {/* Rank */}
-                    <td className="py-3.5 pl-5 pr-2">
-                      <div className="flex items-center gap-1.5">
+                    <td className="py-2.5 pl-3 sm:pl-5 pr-1">
+                      <div className="flex items-center gap-1">
                         {user.rank === 1 ? (
-                          <Medal className="h-5 w-5 text-yellow-400" />
+                          <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
                         ) : user.rank === 2 ? (
-                          <Medal className="h-5 w-5 text-slate-300" />
+                          <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-slate-300" />
                         ) : user.rank === 3 ? (
-                          <Medal className="h-5 w-5 text-amber-600" />
+                          <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
                         ) : (
-                          <span className="font-display text-base font-bold text-slate-400 pl-1">
+                          <span className="font-display text-sm sm:text-base font-bold text-slate-400 pl-0.5">
                             #{user.rank}
                           </span>
                         )}
                       </div>
                     </td>
 
-                    {/* Username */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-pl-purple-accent to-pl-pink text-xs font-bold text-white uppercase shadow-sm">
+                    {/* Username + Club Crest on mobile */}
+                    <td className="px-2.5 sm:px-4 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-gradient-to-tr from-pl-purple-accent to-pl-pink text-[10px] sm:text-xs font-bold text-white uppercase shadow-sm shrink-0">
                           {user.username.slice(0, 2)}
                         </div>
-                        <div>
-                          <span
-                            className={cn(
-                              "font-medium",
-                              isCurrentUser ? "text-pl-green font-bold" : "text-white"
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={cn(
+                                "font-medium truncate block max-w-[100px] sm:max-w-[180px]",
+                                isCurrentUser ? "text-pl-green font-bold" : "text-white"
+                              )}
+                            >
+                              {user.username}
+                            </span>
+                            {user.favoriteClub && (
+                              <img
+                                src={user.favoriteClub.crestUrl}
+                                alt={user.favoriteClub.name}
+                                className="h-4 w-4 object-contain inline sm:hidden shrink-0"
+                              />
                             )}
-                          >
-                            {user.username}
-                          </span>
+                          </div>
                           {isCurrentUser && (
-                            <span className="ml-2 rounded bg-pl-green/20 px-1.5 py-0.5 text-[10px] font-bold text-pl-green">
+                            <span className="rounded bg-pl-green/20 px-1 py-0.2 text-[9px] font-bold text-pl-green inline-block">
                               YOU
                             </span>
                           )}
@@ -130,8 +138,8 @@ export default function LeaderboardTable({ users, currentUserId }: LeaderboardTa
                       </div>
                     </td>
 
-                    {/* Favorite Club */}
-                    <td className="px-4 py-3.5 text-center hidden sm:table-cell">
+                    {/* Favorite Club (Desktop) */}
+                    <td className="px-2 sm:px-4 py-2.5 text-center hidden sm:table-cell">
                       {user.favoriteClub ? (
                         <div className="inline-flex items-center gap-1.5">
                           <img
@@ -149,17 +157,17 @@ export default function LeaderboardTable({ users, currentUserId }: LeaderboardTa
                     </td>
 
                     {/* Exact Hits */}
-                    <td className="px-4 py-3.5 text-center font-semibold text-slate-300">
+                    <td className="px-2 sm:px-4 py-2.5 text-center font-semibold text-slate-300">
                       {user.exactScoreCount}
                     </td>
 
                     {/* Correct Outcomes */}
-                    <td className="px-4 py-3.5 text-center font-semibold text-slate-300">
+                    <td className="px-2 sm:px-4 py-2.5 text-center font-semibold text-slate-300 hidden xs:table-cell">
                       {user.correctOutcomeCount}
                     </td>
 
                     {/* Total Points */}
-                    <td className="py-3.5 pl-4 pr-5 text-right font-display text-xl font-bold text-pl-green">
+                    <td className="py-2.5 pl-2 sm:pl-4 pr-3 sm:pr-5 text-right font-display text-base sm:text-xl font-bold text-pl-green">
                       {user.totalPoints}
                     </td>
                   </tr>
